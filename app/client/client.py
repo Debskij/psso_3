@@ -16,3 +16,6 @@ class Client(AuctionListener):
 
     def update(self, item: Item):
         print(f'{item.parse_item()}')
+
+    def dupa(self):
+        return "dziala hehe"
