@@ -9,5 +9,5 @@ Pyro4.Daemon.serveSimple(
     {
         Server: "default.server",
     },
-    ns = False 
+    ns = True 
 )

@@ -12,7 +12,7 @@ sys.excepthook = Pyro4.util.excepthook
 
 # server = Pyro4.Proxy("PYRONAME:default.server")
 ns = Pyro4.locateNS()
-uri = ns.lookup('default.client.testowy')
+uri = ns.lookup('default.client.janusz')
 client: Client = Pyro4.Proxy(uri)
 print('asd')
 

@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from app.server.auction.item import Item
+
 
 class AuctionListener(ABC):
     @abstractmethod
-    def update(self, item: Item):
+    def update(self, item):
         """
         Invoked by the AuctionServer for each AuctionListener
         which has registered to be notified of changes in the
