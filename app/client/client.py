@@ -37,14 +37,37 @@ class Client(AuctionListener):
         root = Tk()
         frm = ttk.Frame(root, padding=10)
         frm.grid()
-        frm.master.title("Elo byku")
-        frm.master.maxsize(1000, 400)
-        ttk.Label(frm, text="Hello World!").grid(column=0, row=0)
-        ttk.Button(frm, text="Quit", command=root.destroy).grid(column=1, row=0)
+        frm.master.title("Client")
+        items = self.update()
+        print(items)
+
+        for idx_x, value in enumerate(items[0].keys()):
+            w = Text(root, width=15, height=5)
+            w.grid(row=0,column=idx_x)
+            w.insert(END, value)
+        for idx_y, item in enumerate(items):
+            for idx_x, value in enumerate(item.values()):
+                w = Text(root, width=15, height=5)
+                w.grid(row=idx_y+1,column=idx_x)
+                w.insert(END, value)
+            ttk.Button(root, text='bid', command=lambda: self.bid_item(item['item_name'], 100000, frm)).grid(row=idx_y+1,column=len(item.values()))
         root.mainloop()
 
-    def update(self):
-        print(self.assigned_server.get_items())
+    def bid_item(self, item_name, new_bid, frame):
+        print('tu wchodzi jeszcze')
+        self.assigned_server.bid_on_item(self.username, item_name, new_bid)
+        frame.update_idletasks()
 
-    def dupa(self):
-        return "dziala hehe"
+    def update(self, item: Item = None):
+        # todo... cos sie zmieni
+        print('cos sie dzieje')
+        return self.assigned_server.get_items()
+
+    def __str__(self):
+        return self.username
+
+    def __hash__(self):
+        return hash(str(self.username))
+
+    def __eq__(self,other):
+        return hash(str(self.username)) ==hash(str(other.username))

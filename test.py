@@ -20,8 +20,8 @@ from app.client.client import Client
 try:
     client = Client('janusz')
     client.register_client()
-    client.update()
-# client.open_gui()
+    # client.update()
+    client.open_gui()
 except Exception as e:
     print(e)
 finally:

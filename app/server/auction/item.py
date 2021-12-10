@@ -1,5 +1,4 @@
 import datetime
-from app.client.auction_listener import AuctionListener
 from app.server.auction.observable import Observable
 
 
@@ -12,14 +11,16 @@ class Item(Observable):
         self.current_bid = start_bid
         self.end_auction_time = datetime.datetime.now() + datetime.timedelta(seconds=seconds_till_end)
         self.current_bid_owner = None
+        print('item')
 
-        self.add_observer(owner_name)
-
-    def bid_on_item(self, bidder_username: str, bid: float) -> bool:
+    def bid_on_item(self, bidder_username: str, observer, bid: float) -> bool:
+        print('item')
         if bidder_username != self.owner_name and float("%.2f" % bid) > self.current_bid:
+            print('bid_on_item - jestem w item')
             self.current_bid = float("%.2f" % bid)
             self.current_bid_owner = bidder_username
-            self.add_observer(bidder_username)
+            self.add_observer(observer)
+            self.notify_observers()
             return True
         return False
 
@@ -31,3 +32,9 @@ class Item(Observable):
             "current_bid": self.current_bid,
             "end_auction_time": self.end_auction_time
         }
+
+    def notify_observers(self):
+        for observer in self.observers:
+            print('notify_observers')
+            observer.update()
+            print('after update notify_observers')

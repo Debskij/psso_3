@@ -1,18 +1,16 @@
-from abc import ABC
+from abc import ABC, abstractmethod
+from app.client.auction_listener import AuctionListener
 
 
 class Observable(ABC):
     def __init__(self):
-        self.observers: set[str] = set()
+        self.observers: list[AuctionListener] = []
     
-    def add_observer(self, observer_name: str):
-        self.observers.add(observer_name)
-
-    def remove_observer(self, observer) -> bool:
-        if observer in self.observers:
-            self.observers.remove(observer)
-            return True
-        return False
-
+    def add_observer(self, observer: AuctionListener):
+        print('added observer')
+        if observer not in self.observers:
+            self.observers.append(observer)
+    
+    @abstractmethod
     def notify_observers(self):
-        return self.observers
+        raise NotImplementedError

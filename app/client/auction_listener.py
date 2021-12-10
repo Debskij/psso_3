@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 
 class AuctionListener(ABC):
+    username: str
     @abstractmethod
     def update(self, item):
         """
