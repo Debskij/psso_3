@@ -42,6 +42,7 @@ class Client(AuctionListener):
         def refresh_watched():
             for item in self.items:
                 self.grid_fields[item['item_name']]['current_bid'].configure(text=str(item['current_bid']))
+                self.grid_fields[item['item_name']]['current_bid_owner'].configure(text=str(item['current_bid_owner']))
             self.root.after(250, refresh_watched)
 
         def bid(item_name: str, entries_boxes: dict):
@@ -52,6 +53,7 @@ class Client(AuctionListener):
             self.items = self.assigned_server.get_items()
             for item in self.items:
                 self.grid_fields[item['item_name']]['current_bid'].configure(text=str(item['current_bid']))
+                self.grid_fields[item['item_name']]['current_bid_owner'].configure(text=str(item['current_bid_owner']))
 
         self.root = Tk()
         self.root.title('Auction Client')
@@ -100,6 +102,7 @@ class Client(AuctionListener):
             print(item_obj.item_name, item_obj.current_bid)
             item_index = find_item(item_obj)
             self.items[item_index]['current_bid'] = item_obj.current_bid
+            self.items[item_index]['current_bid_owner'] = item_obj.current_bid_owner
             # self.grid_fields[item_obj.item_name]['current_bid'].configure(text=str(item_obj.current_bid))
             # self.grid_fields[item['item_name']]['current_bid'].configure(text=str(item['current_bid']))
             print()

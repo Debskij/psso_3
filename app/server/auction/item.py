@@ -12,8 +12,8 @@ class Item(Observable):
         self.item_desc = item_desc
         self.current_bid = start_bid
         self.end_auction_time = datetime.datetime.now() + datetime.timedelta(seconds=seconds_till_end)
-
         self.current_bid_owner: str = None
+
         self.observers: set[AuctionListener] = set()
         print(f'Created item: {item_name}')
 
@@ -46,5 +46,6 @@ class Item(Observable):
             "item_name": self.item_name,
             "item_desc": self.item_desc,
             "current_bid": self.current_bid,
+            "current_bid_owner": self.current_bid_owner,
             "end_auction_time": self.end_auction_time
         }
