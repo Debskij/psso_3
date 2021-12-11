@@ -35,7 +35,10 @@ class Item(Observable):
     def notify_observers(self):
         for observer in self.observers:
             print(f'notify_observers: {observer}')
-            observer.update(pickle.dumps(self))
+            try:
+                observer.update(pickle.dumps(self))
+            except:
+                pass
 
     def parse_item(self) -> dict:
         return {
