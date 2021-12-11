@@ -1,9 +1,8 @@
-from functools import update_wrapper
+from datetime import datetime, timedelta
 import Pyro4
 from threading import Thread
 from tkinter import *
 import base64
-from tkinter import ttk
 import pickle
 
 from app.client.auction_listener import AuctionListener
@@ -13,9 +12,12 @@ from app.server.auction.item import Item
 
 @Pyro4.expose
 class Client(AuctionListener):
-    def __init__(self, username: str) -> None:
+    def __init__(self, username: str, password: str) -> None:
         self.username = username
+        self.password = password
         self.daemon_thread = None
+        self.minute_before = dict()
+        self.outbid = dict()
 
     def register_client(self, server_namespace: str = 'default.server'):
         ns = Pyro4.locateNS()
@@ -38,18 +40,48 @@ class Client(AuctionListener):
         raise SystemExit
 
     def open_gui(self):
+        def parse_string_to_datetime(date: str):
+            return datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%f").replace(microsecond=0)
+
+        def apply_strategies():
+            for item_name, max_bid in self.minute_before.items():
+                item_index = self.find_item(item_name)
+                if (datetime.now().replace(microsecond=0) + timedelta(minutes=1)) == parse_string_to_datetime(self.items[item_index]['end_auction_time']):
+                    current_price = float(self.items[item_index]['current_bid'])
+                    current_highest_bidder = self.items[item_index]['current_bid_owner']
+                    if current_highest_bidder != self.username and current_price < max_bid:
+                        self.bid_item(item_name, min(current_price*2, max_bid))
+            for item_name, max_bid in self.outbid.items():
+                item_index = self.find_item(item_name)
+                current_price = float(self.items[item_index]['current_bid'])
+                current_highest_bidder = self.items[item_index]['current_bid_owner']
+                if current_price < max_bid and current_highest_bidder != self.username and datetime.now() < parse_string_to_datetime(self.items[item_index]['end_auction_time']):
+                    self.bid_item(item_name, min(current_price+1, max_bid))
+
+
         def refresh_watched():
             if len(self.grid_fields.keys()) != len(self.items):
                 create_grids()
             for item in self.items:
                 self.grid_fields[item['item_name']]['current_bid'].configure(text=str(item['current_bid']))
                 self.grid_fields[item['item_name']]['current_bid_owner'].configure(text=str(item['current_bid_owner']))
+            apply_strategies()
             self.root.after(250, refresh_watched)
 
         def bid(item_name: str, entries_boxes: dict, dropdowns: dict):
             new_price = float(entries_boxes[item_name].get())
-            print(dropdowns[item_name].get())
-            self.bid_item(item_name, new_price)
+            strategy = dropdowns[item_name].get()
+            if strategy == 'normal':
+                self.bid_item(item_name, new_price)
+            elif strategy == "minute before":
+                self.minute_before[item_name] = new_price
+                self.assigned_server.register_listener(self.username, item_name)
+                refresh_all()
+            elif strategy == "outbid":
+                self.outbid[item_name] = new_price
+                self.assigned_server.register_listener(self.username, item_name)
+                refresh_all()
+
         
         def refresh_all():
             self.items = self.assigned_server.get_items()
@@ -132,15 +164,17 @@ class Client(AuctionListener):
         print(f'{self.username}: {item_name} {new_bid}')
         self.assigned_server.bid_on_item(self.username, item_name, new_bid)
 
-    def update(self, item: bytes = None):
-        def find_item(new_item):
+    def find_item(self, new_item):
             for idx, item_in_list in enumerate(self.items):
-                if item_in_list['item_name'] == new_item.item_name:
+                if item_in_list['item_name'] == new_item:
                     return idx
+
+    def update(self, item: bytes = None):
+        
         print('in update')
         if item is not None:
             item_obj: Item = pickle.loads(base64.b64decode(item['data']))
-            item_index = find_item(item_obj)
+            item_index = self.find_item(item_obj.item_name)
             self.items[item_index]['current_bid'] = item_obj.current_bid
             self.items[item_index]['current_bid_owner'] = item_obj.current_bid_owner
         print('update end')

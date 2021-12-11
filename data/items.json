@@ -4,7 +4,7 @@
         "item_name": "kapelusz",
         "item_desc": "fajna czapka",
         "start_bid": 10.0,
-        "seconds_till_end": 120
+        "seconds_till_end": 240
     },
     {
         "owner_name": "Michal",
