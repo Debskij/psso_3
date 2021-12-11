@@ -46,8 +46,9 @@ class Client(AuctionListener):
                 self.grid_fields[item['item_name']]['current_bid_owner'].configure(text=str(item['current_bid_owner']))
             self.root.after(250, refresh_watched)
 
-        def bid(item_name: str, entries_boxes: dict):
+        def bid(item_name: str, entries_boxes: dict, dropdowns: dict):
             new_price = float(entries_boxes[item_name].get())
+            print(dropdowns[item_name].get())
             self.bid_item(item_name, new_price)
         
         def refresh_all():
@@ -68,9 +69,11 @@ class Client(AuctionListener):
             create_grids()
 
         def create_grids():
+            strategies = ["normal", "minute before", "outbid"]
             for label in self.canvas.grid_slaves():
                 label.grid_forget()
             entries = dict()
+            dropdowns = dict()
             for idx_x, value in enumerate(self.items[0].keys()):
                 w = Label(self.canvas, text=value, width=20, height=5)
                 w.grid(row=0, column=idx_x)
@@ -87,8 +90,13 @@ class Client(AuctionListener):
                     item_name_copy = str(self.items[idx_y]['item_name'])
                     entries[str(item['item_name'])] = entry
                     entry.grid(row=idx_y + 1, column=len(item.values()))
-                    button = Button(self.canvas, text='bid', command=lambda name=item_name_copy: bid(name, entries))
+                    button = Button(self.canvas, text='bid', command=lambda name=item_name_copy: bid(name, entries, dropdowns))
                     button.grid(row=idx_y + 1, column=len(item.values())+1)
+                    default_variable = StringVar(self.canvas)
+                    default_variable.set(strategies[0])
+                    dropdown = OptionMenu(self.canvas, default_variable, *strategies)
+                    dropdowns[str(item['item_name'])] = default_variable
+                    dropdown.grid(row=idx_y + 1, column=len(item.values())+2)
             w = Label(self.canvas, text="Create new auction", width=20, height=5)
             w.grid(row=len(self.items)+1, column=0)
             w["state"] = DISABLED

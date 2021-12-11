@@ -14,11 +14,19 @@ label2 = tk.Label(root, text='Type your username:')
 label2.config(font=('helvetica', 10))
 canvas.create_window(200, 100, window=label2)
 
-entry = tk.Entry (root) 
-canvas.create_window(200, 140, window=entry)
+entry_login = tk.Entry (root) 
+canvas.create_window(200, 120, window=entry_login)
+
+label3 = tk.Label(root, text='Type your password:')
+label3.config(font=('helvetica', 10))
+canvas.create_window(200, 160, window=label3)
+
+entry_password = tk.Entry (root) 
+canvas.create_window(200, 180, window=entry_password)
 
 def register_client():
-    x1 = entry.get()
+    x1 = entry_login.get()
+    x2 = entry_password.get()
     if x1.strip() != "":
         client = Client(x1.strip())
         try:
@@ -31,5 +39,5 @@ def register_client():
             client.kill_daemon()
 
 button1 = tk.Button(text='Register', command=register_client, bg='brown', fg='white', font=('helvetica', 9, 'bold'))
-canvas.create_window(200, 180, window=button1)
+canvas.create_window(200, 230, window=button1)
 root.mainloop()
