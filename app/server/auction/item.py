@@ -5,21 +5,28 @@ from app.server.auction.observable import Observable
 
 
 class Item(Observable):
-    def __init__(self, owner_name: str, item_name: str, item_desc: str, start_bid: float, seconds_till_end: int):
-        super().__init__()
+    def __init__(self, owner_name: str,
+                 owner_listener: AuctionListener,
+                 item_name: str,
+                 item_desc: str,
+                 start_bid: float,
+                 seconds_till_end: int):
+
         self.owner_name = owner_name
         self.item_name = item_name
         self.item_desc = item_desc
         self.current_bid = start_bid
         self.end_auction_time = datetime.datetime.now() + datetime.timedelta(seconds=seconds_till_end)
         self.current_bid_owner: str = None
-
         self.observers: set[AuctionListener] = set()
+        self.add_observer(owner_listener)
         print(f'Created item: {item_name}')
 
     def bid_on_item(self, bidder_username: str, observer: AuctionListener, bid: float) -> bool:
         new_bid = float("%.2f" % bid)
-        if bidder_username != self.owner_name and new_bid > self.current_bid:
+        if bidder_username != self.owner_name \
+                and new_bid > self.current_bid \
+                and datetime.datetime.now() < self.end_auction_time:
             self.current_bid = new_bid
             self.current_bid_owner = bidder_username
             self.add_observer(observer)

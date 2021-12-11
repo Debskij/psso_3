@@ -1,3 +1,6 @@
+import datetime
+
+import pymongo
 import Pyro4
 import Pyro4.errors
 import json
@@ -32,7 +35,7 @@ class Server(AuctionServer):
         self.items: dict[str, Item] = dict()
         self.clients: dict[str, AuctionListener] = dict()
 
-        self._load_items()
+        self._load_database()
 
     def add_client(self, client_name, client_uri):
         client = Pyro4.Proxy(client_uri)
@@ -44,10 +47,12 @@ class Server(AuctionServer):
             return self.get_items()
         raise Pyro4.errors.NamingError
 
-    def place_item_for_bid(self, owner_name, item_name, item_desc, start_bid, auction_time):
-        if item_name not in self.items.keys():
-            self.items[item_name] = Item(owner_name, item_name, item_desc, start_bid, auction_time)
-            return self.get_items()
+    def owner_name(self, owner_name, item_name, item_desc, start_bid, auction_time):
+        if owner_name in self.clients.keys():
+            owner_listener = self.clients[owner_name]
+            if item_name not in self.items.keys():
+                self.items[item_name] = Item(owner_name, owner_listener, item_name, item_desc, start_bid, auction_time)
+                return self.get_items()
         raise Pyro4.errors.NamingError
 
     def bid_on_item(self, bidder_username, item_name, bid):
