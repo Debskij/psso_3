@@ -18,7 +18,7 @@ class AuctionServer(ABC):
 
     @abstractmethod
     def place_item_for_bid(self, owner_name: str, item_name: str, item_desc: str,
-                           start_bid: float, auction_time: int) -> Item:
+                           start_bid: float, auction_time: int) -> list:
         """
         Puts a new item up for auction by the owner with name owner_name.
         If an item by that name already is up for auction in the server,
@@ -59,7 +59,7 @@ class AuctionServer(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def register_listener(self, al: AuctionListener, item_name: str) -> Item:
+    def register_listener(self, al: AuctionListener, item_name: str) -> list:
         """
         Registers a listener with the auction server for changes in
         the item specified by the item_name argument. Whenever the

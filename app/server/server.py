@@ -41,16 +41,16 @@ class Server(AuctionServer):
     def register_listener(self, al, item_name):
         if item_name in self.items.keys():
             self.items[item_name].add_observer(al)
-            return self.items[item_name]
+            return self.get_items()
         raise Pyro4.errors.NamingError
 
     def place_item_for_bid(self, owner_name, item_name, item_desc, start_bid, auction_time):
         if item_name not in self.items.keys():
             self.items[item_name] = Item(owner_name, item_name, item_desc, start_bid, auction_time)
-            return self.items[item_name]
+            return self.get_items()
         raise Pyro4.errors.NamingError
 
-    def bid_on_item(self, bidder_username: str, item_name: str, bid: float) -> bool:
+    def bid_on_item(self, bidder_username, item_name, bid):
         print(f'bid_on_item - {bidder_username}, {item_name}')
         if bidder_username in self.clients.keys():
             bidder_listener = self.clients[bidder_username]
@@ -60,7 +60,7 @@ class Server(AuctionServer):
                 return is_success
         raise Pyro4.errors.NamingError
 
-    def get_items(self) -> tuple:
+    def get_items(self):
         return [item.parse_item() for item in self.items.values()]
 
     def _load_items(self):
