@@ -1,4 +1,6 @@
 import datetime
+import pickle
+from app.client.auction_listener import AuctionListener
 from app.server.auction.observable import Observable
 
 
@@ -10,19 +12,30 @@ class Item(Observable):
         self.item_desc = item_desc
         self.current_bid = start_bid
         self.end_auction_time = datetime.datetime.now() + datetime.timedelta(seconds=seconds_till_end)
-        self.current_bid_owner = None
-        print('item')
 
-    def bid_on_item(self, bidder_username: str, observer, bid: float) -> bool:
-        print('item')
-        if bidder_username != self.owner_name and float("%.2f" % bid) > self.current_bid:
-            print('bid_on_item - jestem w item')
-            self.current_bid = float("%.2f" % bid)
+        self.current_bid_owner: str = None
+        self.observers: set[AuctionListener] = set()
+        print(f'Created item: {item_name}')
+
+    def bid_on_item(self, bidder_username: str, observer: AuctionListener, bid: float) -> bool:
+        new_bid = float("%.2f" % bid)
+        if bidder_username != self.owner_name and new_bid > self.current_bid:
+            self.current_bid = new_bid
             self.current_bid_owner = bidder_username
             self.add_observer(observer)
             self.notify_observers()
+            print(f'Bid on item {self.item_name} - new price {self.current_bid}')
             return True
+        print(f'Bid on item {self.item_name} unsuccessful')
         return False
+
+    def add_observer(self, observer: AuctionListener):
+        self.observers.add(observer)
+
+    def notify_observers(self):
+        for observer in self.observers:
+            print(f'notify_observers: {observer}')
+            observer.update(pickle.dumps(self))
 
     def parse_item(self) -> dict:
         return {
@@ -32,9 +45,3 @@ class Item(Observable):
             "current_bid": self.current_bid,
             "end_auction_time": self.end_auction_time
         }
-
-    def notify_observers(self):
-        for observer in self.observers:
-            print('notify_observers')
-            observer.update()
-            print('after update notify_observers')

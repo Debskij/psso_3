@@ -14,13 +14,11 @@ sys.excepthook = Pyro4.util.excepthook
 ns = Pyro4.locateNS()
 uri = ns.lookup('default.client.janusz')
 client: Client = Pyro4.Proxy(uri)
-print('asd')
 
 # daemon = Pyro4.Daemon()
 # client_uri = daemon.register(Client)
 # print(client_uri)
 # client: Client = Pyro4.Proxy(client_uri)
-print(client.dupa())
 
 # server = Server()
 # server.add_client("janusz", client)

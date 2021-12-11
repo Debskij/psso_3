@@ -47,7 +47,7 @@ class AuctionServer(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def register_listener(al: AuctionListener, item_name: str):
+    def register_listener(self, al: AuctionListener, item_name: str):
         """
         Registers a listener with the auction server for changes in
         the item specified by the item_name argument. Whenever the
@@ -55,6 +55,7 @@ class AuctionServer(ABC):
         the AuctionListener is notified via its update() method.
         Note that the IAuctionListener object is a remote object!
 
+        :param al:
         :param item_name:
         :return:
         """

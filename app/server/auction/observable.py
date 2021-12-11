@@ -3,14 +3,10 @@ from app.client.auction_listener import AuctionListener
 
 
 class Observable(ABC):
-    def __init__(self):
-        self.observers: list[AuctionListener] = []
-    
+    @abstractmethod
     def add_observer(self, observer: AuctionListener):
-        print('added observer')
-        if observer not in self.observers:
-            self.observers.append(observer)
-    
+        raise NotImplementedError
+
     @abstractmethod
     def notify_observers(self):
         raise NotImplementedError

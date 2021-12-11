@@ -5,9 +5,10 @@ from app.server.server import Server
 from app.client.client import Client
 
 
-Pyro4.Daemon.serveSimple(
-    {
-        Server: "default.server",
-    },
-    ns = True 
-)
+ns = Pyro4.locateNS()
+daemon = Pyro4.Daemon()
+
+server = Server()
+server_uri = daemon.register(server)
+ns.register(f'default.server', server_uri)
+daemon.requestLoop()
