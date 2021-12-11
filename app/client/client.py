@@ -1,3 +1,4 @@
+from functools import update_wrapper
 import Pyro4
 from threading import Thread
 from tkinter import *
@@ -38,57 +39,70 @@ class Client(AuctionListener):
         raise SystemExit
 
     def open_gui(self):
-        def refresh():
-            pass
-        def bid(item_name: str, entries_boxes: dict, grid_fields: dict):
-            print(item_name, entries_boxes[item_name].get())
-            for key, entry in entries_boxes.items():
-                print(key, entry.get())
+        def refresh_watched():
+            for item in self.items:
+                self.grid_fields[item['item_name']]['current_bid'].configure(text=str(item['current_bid']))
+            self.root.after(250, refresh_watched)
+
+        def bid(item_name: str, entries_boxes: dict):
             new_price = float(entries_boxes[item_name].get())
             self.bid_item(item_name, new_price)
-            # grid_fields[item_name]['current_bid'].configure(text=str(new_price))
+        
+        def refresh_all():
+            self.items = self.assigned_server.get_items()
+            for item in self.items:
+                self.grid_fields[item['item_name']]['current_bid'].configure(text=str(item['current_bid']))
 
-        root = Tk()
-        root.title('Auction Client')
-        canvas = Canvas(root, width=700, height=1200, relief='raised')
+        self.root = Tk()
+        self.root.title('Auction Client')
+        canvas = Canvas(self.root, width=700, height=1200, relief='raised')
         canvas.pack()
         frm = Frame(canvas)
         frm.grid()
         self.items = self.assigned_server.get_items()
         entries = dict()
         buttons = list()
-        grid_fields = dict()
+        self.grid_fields = dict()
         for idx_x, value in enumerate(self.items[0].keys()):
-            w = Text(canvas, width=15, height=5)
+            w = Label(canvas, text=value, width=15, height=5)
             w.grid(row=0, column=idx_x)
-            w.insert(END, value)
             w["state"] = DISABLED
         for idx_y, item in enumerate(self.items):
-            grid_fields[item['item_name']] = dict()
+            self.grid_fields[item['item_name']] = dict()
             for idx_x, (field_name, value) in enumerate(item.items()):
-                w = Text(canvas, width=15, height=5)
+                w = Label(canvas, text=value, width=15, height=5)
                 w.grid(row=idx_y + 1, column=idx_x)
-                w.insert(END, value)
                 w["state"] = DISABLED
-                grid_fields[item['item_name']][field_name] = w
+                self.grid_fields[item['item_name']][field_name] = w
             entry = Entry(canvas)
             item_name_copy = str(self.items[idx_y]['item_name'])
             entries[str(item['item_name'])] = entry
             entry.grid(row=idx_y + 1, column=len(item.values()))
-            buttons.append(Button(canvas, text='bid', command=lambda name=item_name_copy: bid(name, entries, grid_fields)))
+            buttons.append(Button(canvas, text='bid', command=lambda name=item_name_copy: bid(name, entries)))
             buttons[idx_y].grid(row=idx_y + 1, column=len(item.values())+1)
-        root.mainloop()
+        Button(canvas, text='refresh', command=refresh_all).grid(row=0, column=len(item.values()))
+        refresh_watched()
+        self.root.mainloop()
 
     def bid_item(self, item_name, new_bid):
         print(f'{self.username}: {item_name} {new_bid}')
         self.assigned_server.bid_on_item(self.username, item_name, new_bid)
 
     def update(self, item: bytes = None):
+        def find_item(new_item):
+            for idx, item_in_list in enumerate(self.items):
+                if item_in_list['item_name'] == new_item.item_name:
+                    return idx
         print('in update')
         if item is not None:
-            print(base64.b64decode(item['data']))
+            # print(base64.b64decode(item['data']))
             item_obj: Item = pickle.loads(base64.b64decode(item['data']))
-            print(f'{item_obj.item_name}')
+            print(item_obj.item_name, item_obj.current_bid)
+            item_index = find_item(item_obj)
+            self.items[item_index]['current_bid'] = item_obj.current_bid
+            # self.grid_fields[item_obj.item_name]['current_bid'].configure(text=str(item_obj.current_bid))
+            # self.grid_fields[item['item_name']]['current_bid'].configure(text=str(item['current_bid']))
+            print()
         print('update end')
 
     def __str__(self):
