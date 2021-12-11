@@ -1,6 +1,6 @@
 import datetime
+from tkinter.constants import N
 
-import pymongo
 import Pyro4
 import Pyro4.errors
 import json
@@ -35,7 +35,7 @@ class Server(AuctionServer):
         self.items: dict[str, Item] = dict()
         self.clients: dict[str, AuctionListener] = dict()
 
-        self._load_database()
+        self._load_items()
 
     def add_client(self, client_name, client_uri):
         client = Pyro4.Proxy(client_uri)
@@ -73,6 +73,7 @@ class Server(AuctionServer):
         data = json.load(file)
         for item_data in data:
             self.items[item_data['item_name']] = Item(item_data['owner_name'],
+                                                      None,
                                                       item_data['item_name'],
                                                       item_data['item_desc'],
                                                       item_data['start_bid'],
