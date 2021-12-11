@@ -1,12 +1,24 @@
 from abc import ABC, abstractmethod
 
 from app.client.auction_listener import AuctionListener
+from app.server.auction.item import Item
 
 
 class AuctionServer(ABC):
     @abstractmethod
+    def add_client(self, client_name, client_uri):
+        """
+        Register client in server
+
+        :param client_name: client username
+        :param client_uri: client server uri to connect
+        :return:
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def place_item_for_bid(self, owner_name: str, item_name: str, item_desc: str,
-                           start_bid: float, auction_time: int) -> None:
+                           start_bid: float, auction_time: int) -> Item:
         """
         Puts a new item up for auction by the owner with name owner_name.
         If an item by that name already is up for auction in the server,
@@ -47,16 +59,16 @@ class AuctionServer(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def register_listener(self, al: AuctionListener, item_name: str):
+    def register_listener(self, al: AuctionListener, item_name: str) -> Item:
         """
         Registers a listener with the auction server for changes in
         the item specified by the item_name argument. Whenever the
         current bid on the specified item changes (or its auction period expires),
         the AuctionListener is notified via its update() method.
-        Note that the IAuctionListener object is a remote object!
+        Note that the AuctionListener object is a remote object!
 
-        :param al:
-        :param item_name:
-        :return:
+        :param al: Observer for item
+        :param item_name: item to bs observe
+        :return: item on auction
         """
         raise NotImplementedError
