@@ -47,7 +47,7 @@ class Server(AuctionServer):
             return self.get_items()
         raise Pyro4.errors.NamingError
 
-    def owner_name(self, owner_name, item_name, item_desc, start_bid, auction_time):
+    def place_item_for_bid(self, owner_name, item_name, item_desc, start_bid, auction_time):
         if owner_name in self.clients.keys():
             owner_listener = self.clients[owner_name]
             if item_name not in self.items.keys():
