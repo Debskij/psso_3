@@ -28,7 +28,7 @@ def register_client():
     x1 = entry_login.get()
     x2 = entry_password.get()
     if x1.strip() != "":
-        client = Client(x1.strip())
+        client = Client(x1.strip(), x2.strip())
         try:
             client.register_client()
             root.destroy()

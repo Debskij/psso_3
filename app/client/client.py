@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import Pyro4
 from threading import Thread
 from tkinter import *
@@ -42,6 +42,9 @@ class Client(AuctionListener):
     def open_gui(self):
         def parse_string_to_datetime(date: str):
             return datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%f").replace(microsecond=0)
+
+        def parse_datetime_to_string(dt: datetime):
+            return dt.strftime("%H:%M:%S\n%d.%m.%Y")
 
         def apply_strategies():
             for item_name, max_bid in self.minute_before.items():
@@ -107,10 +110,11 @@ class Client(AuctionListener):
             entries = dict()
             dropdowns = dict()
             for idx_x, value in enumerate(self.items[0].keys()):
-                w = Label(self.canvas, text=value, width=20, height=5)
+                w = Label(self.canvas, text=value.replace('_', ' '), width=20, height=5)
                 w.grid(row=0, column=idx_x)
                 w["state"] = DISABLED
             for idx_y, item in enumerate(self.items):
+                item['end_auction_time'] = parse_datetime_to_string(parse_string_to_datetime(item['end_auction_time']))
                 self.grid_fields[item['item_name']] = dict()
                 for idx_x, (field_name, value) in enumerate(item.items()):
                     w = Label(self.canvas, text=value, width=20, height=5)
@@ -134,7 +138,7 @@ class Client(AuctionListener):
             w["state"] = DISABLED
             required_entries = ["item_name", "item_desc", "minimal_bid", "time_till_end"]
             for idx_x, param_name in enumerate(required_entries):
-                w = Label(self.canvas, text=param_name, width=20, height=5)
+                w = Label(self.canvas, text=param_name.replace('_', ' '), width=20, height=5)
                 w.grid(row=len(self.items)+2, column=idx_x)
                 w["state"] = DISABLED
             new_auction_entries = dict()
