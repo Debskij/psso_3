@@ -7,6 +7,9 @@ db_client = pymongo.MongoClient('mongodb://127.0.0.1:27017')
 db_auction = db_client['Auction']
 
 coll_item = db_auction.get_collection('coll_item')
+coll_user = db_auction.get_collection('coll_user')
+coll_user.drop()
+coll_item.drop()
 coll_item.insert_many([
     {
         'item_desc': 'fajna czapka',

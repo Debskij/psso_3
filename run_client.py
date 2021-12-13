@@ -34,6 +34,10 @@ def register_client():
             if client.register_client():
                 root.destroy()
                 client.open_gui()
+            else:
+                invalid_pwd = tk.Label(root, text='Invalid password')
+                invalid_pwd.config(font=('helvetica', 10))
+                canvas.create_window(200, 200, window=invalid_pwd)
         except Exception as e:
             print(e)
 
