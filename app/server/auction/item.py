@@ -10,17 +10,18 @@ class Item(Observable):
                  item_name: str,
                  item_desc: str,
                  start_bid: float,
-                 seconds_till_end: int):
+                 end_auction_time: datetime.datetime,
+                 current_bid_owner: str = ''):
 
         self.owner_name = owner_name
         self.item_name = item_name
         self.item_desc = item_desc
         self.current_bid = float(start_bid)
-        self.end_auction_time = datetime.datetime.now() + datetime.timedelta(seconds=int(seconds_till_end))
-        self.current_bid_owner: str = None
+        self.end_auction_time = end_auction_time
+        self.current_bid_owner: str = current_bid_owner
         self.observers: set[AuctionListener] = set()
         self.add_observer(owner_listener)
-        print(f'Created item: {item_name}')
+        print(f'Created item: {self.parse_item()}')
 
     def bid_on_item(self, bidder_username: str, observer: AuctionListener, bid: float) -> bool:
         new_bid = float("%.2f" % bid)

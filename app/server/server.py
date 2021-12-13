@@ -1,3 +1,4 @@
+import pymongo
 import datetime
 from tkinter.constants import N
 
@@ -35,7 +36,7 @@ class Server(AuctionServer):
         self.items: dict[str, Item] = dict()
         self.clients: dict[str, AuctionListener] = dict()
 
-        self._load_items()
+        self._load_database()
 
     def add_client(self, client_name, client_uri):
         client = Pyro4.Proxy(client_uri)
@@ -51,7 +52,9 @@ class Server(AuctionServer):
         if owner_name in self.clients.keys():
             owner_listener = self.clients[owner_name]
             if item_name not in self.items.keys():
-                self.items[item_name] = Item(owner_name, owner_listener, item_name, item_desc, start_bid, auction_time)
+                self.items[item_name] = Item(owner_name, owner_listener, item_name, item_desc, start_bid,
+                                             datetime.datetime.now() + datetime.timedelta(seconds=int(auction_time)))
+                self._insert_record(self.items[item_name])
                 return self.get_items()
         raise Pyro4.errors.NamingError
 
@@ -62,20 +65,33 @@ class Server(AuctionServer):
             if item_name in self.items.keys():
                 is_success = self.items[item_name].bid_on_item(bidder_username, bidder_listener, bid)
                 print(self.items[item_name].parse_item())
+                if is_success:
+                    self._update_record(self.items[item_name])
                 return is_success
         raise Pyro4.errors.NamingError
 
     def get_items(self):
         return [item.parse_item() for item in self.items.values()]
 
-    def _load_items(self):
-        file = open('./data/items.json')
-        data = json.load(file)
-        for item_data in data:
+    def _load_database(self):
+        self.db_client = pymongo.MongoClient('mongodb://127.0.0.1:27017')
+        self.db_auction = self.db_client['Auction']
+
+        # Collections
+        self.coll_item = self.db_auction.get_collection('coll_item')
+        self.coll_user = self.db_auction.get_collection('coll_user')
+
+        for item_data in self.coll_item.find():
             self.items[item_data['item_name']] = Item(item_data['owner_name'],
                                                       None,
                                                       item_data['item_name'],
                                                       item_data['item_desc'],
-                                                      item_data['start_bid'],
-                                                      item_data['seconds_till_end'])
-        file.close()
+                                                      item_data['current_bid'],
+                                                      item_data['end_auction_time'],
+                                                      item_data['current_bid_owner'])
+
+    def _update_record(self, item: Item):
+        self.coll_item.replace_one({"item_name": item.item_name}, item.parse_item())
+
+    def _insert_record(self, item: Item):
+        self.coll_item.insert_one(item.parse_item())
