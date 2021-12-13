@@ -6,6 +6,7 @@ import Pyro4
 import Pyro4.errors
 import json
 
+from app.logger import create_logger
 from app.server.auction_server import AuctionServer
 from app.client.auction_listener import AuctionListener
 from app.server.auction.item import Item
@@ -35,12 +36,14 @@ class Server(AuctionServer):
     def __init__(self) -> None:
         self.items: dict[str, Item] = dict()
         self.clients: dict[str, AuctionListener] = dict()
+        self._logger = create_logger(f'server')
 
         self._load_database()
 
     def add_client(self, client_name, client_uri):
         client = Pyro4.Proxy(client_uri)
         self.clients[client_name] = client
+        self._logger.info(f'Server connected with client {client_name}')
 
     def register_listener(self, username, item_name):
         if item_name in self.items.keys():
@@ -49,6 +52,7 @@ class Server(AuctionServer):
         raise Pyro4.errors.NamingError
 
     def place_item_for_bid(self, owner_name, item_name, item_desc, start_bid, auction_time):
+        self._logger.info(f'place_item_for_bid called by {owner_name}')
         if owner_name in self.clients.keys():
             owner_listener = self.clients[owner_name]
             if item_name not in self.items.keys():
@@ -59,12 +63,11 @@ class Server(AuctionServer):
         raise Pyro4.errors.NamingError
 
     def bid_on_item(self, bidder_username, item_name, bid):
-        print(f'bid_on_item - {bidder_username}, {item_name}')
+        self._logger.info(f'bid_on_item called by {bidder_username}')
         if bidder_username in self.clients.keys():
             bidder_listener = self.clients[bidder_username]
             if item_name in self.items.keys():
                 is_success = self.items[item_name].bid_on_item(bidder_username, bidder_listener, bid)
-                print(self.items[item_name].parse_item())
                 if is_success:
                     self._update_record(self.items[item_name])
                 return is_success
@@ -77,6 +80,7 @@ class Server(AuctionServer):
         # Connection
         self.db_client = pymongo.MongoClient('mongodb://127.0.0.1:27017')
         self.db_auction = self.db_client['Auction']
+        self._logger.info(f'Database mongo version: {self.db_client.server_info()["version"]}')
 
         # Collections
         self.coll_item = self.db_auction.get_collection('coll_item')
@@ -93,7 +97,9 @@ class Server(AuctionServer):
                                                       item_data['current_bid_owner'])
 
     def _update_record(self, item: Item):
+        self._logger.info(f'Update record in database: {item.item_name}')
         self.coll_item.replace_one({"item_name": item.item_name}, item.parse_item(True))
 
     def _insert_record(self, item: Item):
+        self._logger.info(f'Insert record to database: {item.parse_item(True)}')
         self.coll_item.insert_one(item.parse_item(True))

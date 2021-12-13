@@ -1,6 +1,7 @@
 import datetime
 import pickle
 from app.client.auction_listener import AuctionListener
+from app.logger import create_logger
 from app.server.auction.observable import Observable
 
 
@@ -13,6 +14,7 @@ class Item(Observable):
                  end_auction_time: datetime.datetime,
                  current_bid_owner: str = ''):
 
+        self._logger = create_logger(f'item_{item_name}')
         self.owner_name = owner_name
         self.item_name = item_name
         self.item_desc = item_desc
@@ -21,7 +23,7 @@ class Item(Observable):
         self.current_bid_owner: str = current_bid_owner
         self.observers: set[AuctionListener] = set()
         self.add_observer(owner_listener)
-        print(f'Created item: {self.parse_item()}')
+        self._logger.info(f'Created item: {self.parse_item()}')
 
     def bid_on_item(self, bidder_username: str, observer: AuctionListener, bid: float) -> bool:
         new_bid = float("%.2f" % bid)
@@ -32,18 +34,20 @@ class Item(Observable):
             self.current_bid_owner = bidder_username
             self.add_observer(observer)
             self.notify_observers()
-            print(f'Bid on item {self.item_name} - new price {self.current_bid}')
+            self._logger.info(f'Bid on item {self.item_name} - new price {self.current_bid}')
             return True
-        print(f'Bid on item {self.item_name} unsuccessful')
+        self._logger.info(f'Bid on item {self.item_name} unsuccessful')
         return False
 
     def add_observer(self, observer: AuctionListener):
-        self.observers.add(observer)
+        if observer is not None:
+            self.observers.add(observer)
+            self._logger.info(f'New observer added {observer}')
 
     def notify_observers(self):
         for observer in self.observers:
-            print(f'notify_observers: {observer}')
             try:
+                self._logger.info(f'Notify observer: {observer}')
                 observer.update(pickle.dumps(self))
             except:
                 pass
@@ -52,7 +56,7 @@ class Item(Observable):
         end_action_time = self.end_auction_time.strftime("%H:%M:%S\n%d.%m.%Y")
         if for_database_format:
             end_action_time = self.end_auction_time
-            
+
         return {
             "owner_name": self.owner_name,
             "item_name": self.item_name,

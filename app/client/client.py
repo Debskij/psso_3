@@ -6,6 +6,7 @@ import base64
 import pickle
 
 from app.client.auction_listener import AuctionListener
+from app.logger import create_logger
 from app.server.server import Server
 from app.server.auction.item import Item
 
@@ -16,27 +17,30 @@ class Client(AuctionListener):
         self.username = username
         self.password = password
         self.daemon_thread = None
+        self.assigned_server = None
         self.minute_before = dict()
         self.outbid = dict()
+        self._logger = create_logger(f'client_{username}')
 
     def register_client(self, server_namespace: str = 'default.server'):
         ns = Pyro4.locateNS()
         daemon = Pyro4.Daemon()
         client_uri = daemon.register(self)
         ns.register(f'default.client.{self.username}', client_uri)
-        print('zarejestrowalem klienta')
+        self._logger.info(f'Client registered at {client_uri} uri')
+
         uri = ns.lookup(server_namespace)
         auction_server: Server = Pyro4.Proxy(uri)
         self.assigned_server = auction_server
         self.daemon_thread = Thread(target=daemon.requestLoop)
         self.daemon_thread.daemon = True
         self.daemon_thread.start()
+        self._logger.info(f'Client connected with server')
 
-        print('polaczylem z serwerem')
         auction_server.add_client(self.username, client_uri)
-        print('dodalem clienta')
 
     def kill_daemon(self):
+        self._logger.info(f'Client disconnected.')
         raise SystemExit
 
     def open_gui(self):
@@ -65,7 +69,6 @@ class Client(AuctionListener):
                     self.buttons[item['item_name']]['state'] = 'disabled'
             self.root.after(1000, disable_auctions_from_past)
 
-
         def refresh_watched():
             if len(self.grid_fields.keys()) != len(self.items):
                 create_grids()
@@ -89,7 +92,6 @@ class Client(AuctionListener):
                 self.assigned_server.register_listener(self.username, item_name)
                 refresh_all()
 
-        
         def refresh_all():
             self.items = self.assigned_server.get_items()
             if len(self.grid_fields.keys()) != len(self.items):
@@ -104,6 +106,7 @@ class Client(AuctionListener):
             item_desc = self.new_auction_entries['item_desc'].get()
             current_bid = self.new_auction_entries['minimal_bid'].get()
             end_auction_time = self.new_auction_entries['time_till_end'].get()
+            self._logger.info(f'{self.username} place item {item_name} on bid with value {current_bid}')
             self.items = self.assigned_server.place_item_for_bid(owner_name, item_name, item_desc, current_bid, end_auction_time)
             create_grids()
 
@@ -154,7 +157,7 @@ class Client(AuctionListener):
             Button(self.canvas, text='Create auction', command=create_new_item).grid(row=len(self.items)+3, column=len(required_entries))
             Button(self.canvas, text='Refresh', command=refresh_all).grid(row=0, column=len(item.values()))
             w = Label(self.canvas, text="Authors: \n176311\n176062\n183710", width=20, height=5)
-            w.grid(row=len(self.items)+4, column=0)
+            w.grid(row=len(self.items) + 4, column=0)
             w["state"] = DISABLED
 
         self.root = Tk()
@@ -171,23 +174,21 @@ class Client(AuctionListener):
         self.root.mainloop()
 
     def bid_item(self, item_name, new_bid):
-        print(f'{self.username}: {item_name} {new_bid}')
+        self._logger.info(f'{self.username} bid on {item_name} - value {new_bid}')
         self.assigned_server.bid_on_item(self.username, item_name, new_bid)
 
     def find_item(self, new_item):
-            for idx, item_in_list in enumerate(self.items):
-                if item_in_list['item_name'] == new_item:
-                    return idx
+        for idx, item_in_list in enumerate(self.items):
+            if item_in_list['item_name'] == new_item:
+                return idx
 
     def update(self, item: bytes = None):
-        
-        print('in update')
         if item is not None:
             item_obj: Item = pickle.loads(base64.b64decode(item['data']))
             item_index = self.find_item(item_obj.item_name)
             self.items[item_index]['current_bid'] = item_obj.current_bid
             self.items[item_index]['current_bid_owner'] = item_obj.current_bid_owner
-        print('update end')
+            self._logger.info(f'Update {item_obj.item_name} item in client')
 
     def __str__(self):
         return self.username
