@@ -74,6 +74,7 @@ class Server(AuctionServer):
         return [item.parse_item() for item in self.items.values()]
 
     def _load_database(self):
+        # Connection
         self.db_client = pymongo.MongoClient('mongodb://127.0.0.1:27017')
         self.db_auction = self.db_client['Auction']
 
@@ -81,6 +82,7 @@ class Server(AuctionServer):
         self.coll_item = self.db_auction.get_collection('coll_item')
         self.coll_user = self.db_auction.get_collection('coll_user')
 
+        # Load items from database to server
         for item_data in self.coll_item.find():
             self.items[item_data['item_name']] = Item(item_data['owner_name'],
                                                       None,
@@ -91,7 +93,7 @@ class Server(AuctionServer):
                                                       item_data['current_bid_owner'])
 
     def _update_record(self, item: Item):
-        self.coll_item.replace_one({"item_name": item.item_name}, item.parse_item())
+        self.coll_item.replace_one({"item_name": item.item_name}, item.parse_item(True))
 
     def _insert_record(self, item: Item):
-        self.coll_item.insert_one(item.parse_item())
+        self.coll_item.insert_one(item.parse_item(True))

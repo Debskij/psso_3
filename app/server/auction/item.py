@@ -48,12 +48,16 @@ class Item(Observable):
             except:
                 pass
 
-    def parse_item(self) -> dict:
+    def parse_item(self, for_database_format: bool = False) -> dict:
+        end_action_time = self.end_auction_time.strftime("%H:%M:%S\n%d.%m.%Y")
+        if for_database_format:
+            end_action_time = self.end_auction_time
+            
         return {
             "owner_name": self.owner_name,
             "item_name": self.item_name,
             "item_desc": self.item_desc,
             "current_bid": self.current_bid,
             "current_bid_owner": self.current_bid_owner,
-            "end_auction_time": self.end_auction_time.strftime("%H:%M:%S\n%d.%m.%Y")
+            "end_auction_time": end_action_time
         }
