@@ -6,11 +6,12 @@ from app.server.auction.item import Item
 
 class AuctionServer(ABC):
     @abstractmethod
-    def add_client(self, client_name, client_uri):
+    def add_client(self, client_name, client_password, client_uri):
         """
         Register client in server
 
         :param client_name: client username
+        :param client_password: client client_password coded by sha256
         :param client_uri: client server uri to connect
         :return:
         """

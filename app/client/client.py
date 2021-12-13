@@ -1,3 +1,4 @@
+import hashlib
 from datetime import date, datetime, timedelta
 import Pyro4
 from threading import Thread
@@ -9,20 +10,20 @@ from app.client.auction_listener import AuctionListener
 from app.logger import create_logger
 from app.server.server import Server
 from app.server.auction.item import Item
-
+import Pyro4.errors
 
 @Pyro4.expose
 class Client(AuctionListener):
     def __init__(self, username: str, password: str) -> None:
         self.username = username
-        self.password = password
+        self.password = hashlib.sha256(password.encode()).hexdigest()
         self.daemon_thread = None
         self.assigned_server = None
         self.minute_before = dict()
         self.outbid = dict()
         self._logger = create_logger(f'client_{username}')
 
-    def register_client(self, server_namespace: str = 'default.server'):
+    def register_client(self, server_namespace: str = 'default.server') -> bool:
         ns = Pyro4.locateNS()
         daemon = Pyro4.Daemon()
         client_uri = daemon.register(self)
@@ -37,11 +38,17 @@ class Client(AuctionListener):
         self.daemon_thread.start()
         self._logger.info(f'Client connected with server')
 
-        auction_server.add_client(self.username, client_uri)
+        try:
+            auction_server.add_client(self.username, self.password, client_uri)
+            return True
+        except Pyro4.errors.SecurityError:
+            self._logger.info(f'Invalid password.')
+            self.kill_daemon()
+            return False
 
     def kill_daemon(self):
         self._logger.info(f'Client disconnected.')
-        raise SystemExit
+        del self
 
     def open_gui(self):
         def parse_string_to_datetime(date: str):

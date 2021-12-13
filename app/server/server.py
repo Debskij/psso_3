@@ -40,10 +40,19 @@ class Server(AuctionServer):
 
         self._load_database()
 
-    def add_client(self, client_name, client_uri):
+    def add_client(self, client_name, client_password, client_uri):
         client = Pyro4.Proxy(client_uri)
-        self.clients[client_name] = client
-        self._logger.info(f'Server connected with client {client_name}')
+        if client_name in self.clients:
+            login_validated = self._validate_password(client_name, client_password)
+        else:
+            login_validated = self._register_client(client_name, client_password)
+
+        if login_validated:
+            self.clients[client_name] = client
+            self._logger.info(f'Server connected with client {client_name}')
+        else:
+            self._logger.info(f'Invalid password')
+            raise Pyro4.errors.SecurityError
 
     def register_listener(self, username, item_name):
         if item_name in self.items.keys():
@@ -86,6 +95,10 @@ class Server(AuctionServer):
         self.coll_item = self.db_auction.get_collection('coll_item')
         self.coll_user = self.db_auction.get_collection('coll_user')
 
+        # Load users from database to server
+        for user in self.coll_user.find():
+            self.clients[user['client_name']] = None
+
         # Load items from database to server
         for item_data in self.coll_item.find():
             self.items[item_data['item_name']] = Item(item_data['owner_name'],
@@ -103,3 +116,17 @@ class Server(AuctionServer):
     def _insert_record(self, item: Item):
         self._logger.info(f'Insert record to database: {item.parse_item(True)}')
         self.coll_item.insert_one(item.parse_item(True))
+
+    def _validate_password(self, client_name, client_password) -> bool:
+        self._logger.info(f'Validate client: {client_name}')
+        client = self.coll_user.find_one({'client_name': client_name})
+        return client['password'] == client_password
+
+    def _register_client(self, client_name, client_password) -> bool:
+        self._logger.info(f'Register new client: {client_name}')
+        client = {
+            'client_name': client_name,
+            'password': client_password
+        }
+        self.coll_user.insert_one(client)
+        return True
