@@ -55,5 +55,5 @@ class Item(Observable):
             "item_desc": self.item_desc,
             "current_bid": self.current_bid,
             "current_bid_owner": self.current_bid_owner,
-            "end_auction_time": self.end_auction_time
+            "end_auction_time": self.end_auction_time.strftime("%H:%M:%S\n%d.%m.%Y")
         }

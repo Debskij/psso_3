@@ -42,9 +42,9 @@ class Server(AuctionServer):
         client = Pyro4.Proxy(client_uri)
         self.clients[client_name] = client
 
-    def register_listener(self, al, item_name):
+    def register_listener(self, username, item_name):
         if item_name in self.items.keys():
-            self.items[item_name].add_observer(al)
+            self.items[item_name].add_observer(self.clients[username])
             return self.get_items()
         raise Pyro4.errors.NamingError
 
