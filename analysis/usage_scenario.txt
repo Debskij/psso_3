@@ -1,0 +1,8 @@
+Usage scenario: licytacja przedmiotu z wyborem strategii
+
+1. Użytkownik loguje się na swoje konto w aplikacji
+2. Użytkownik lokalizuje na liście aukcji interesujący go przedmiot
+3. Użytkownik wprowadza swoją cenę licytacji
+4. Użytkownik wybiera strategię automatycznej licytacji np. "outbid"
+5. Użytkownik składa ofertę licytacji poprzez zatwierdzenie przyciskiem "bid"
+6. Aplikacja odświeża cenę najnowszej oferty
